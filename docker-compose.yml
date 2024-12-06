@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5.25.1-community-bullseye
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-neo4jpass}
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  install-labels:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-neo4jpass}
+    command: neomodel_install_labels analyzer.models.network analyzer.models.aws --db bolt://${NEO4J_USER:-neo4j}:${NEO4J_PASSWORD:-neo4jpass}@neo4j:7687
+    depends_on:
+      neo4j:
+        condition: service_healthy
+
+  analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-neo4jpass}
+    volumes:
+      - ${HOME}/.aws:/root/.aws:ro
+      - ./export:/app/export
+      - ./config.yml:/app/config.yml:ro
+    depends_on:
+      install-labels:
+        condition: service_completed_successfully
+
+  # analyzer-dev:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - NEO4J_HOST=neo4j
+  #     - NEO4J_PORT=7687
+  #     - NEO4J_USER=${NEO4J_USER:-neo4j}
+  #     - NEO4J_PASSWORD=${NEO4J_PASSWORD:-neo4jpass}
+  #   volumes:
+  #     - ${HOME}/.aws:/root/.aws:ro
+  #     - ./export:/app/export
+  #     - ./config.yml:/app/config.yml:ro
+  #     - ./main.py:/app/main.py
+  #     - ./analyzer:/app/analyzer
+  #   depends_on:
+  #     install-labels:
+  #       condition: service_completed_successfully
+
+volumes:
+  neo4j_data:
+  neo4j_logs: 

@@ -1,0 +1,4 @@
+debug: true
+
+aws:
+  type: "boto3"
