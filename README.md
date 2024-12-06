@@ -1,4 +1,4 @@
-# Network Analyzer
+# Know Your Network
 
 When you join a new company, you will be faced with a complex network architecture left over from history. How to quickly sort out the network architecture and transform it according to the principles of zero trust?
 
@@ -61,7 +61,7 @@ However, it does not include network relationships, such as routing tables, ACLs
 ### Quick Start with Docker
 1. Clone the repository
 ```
-git clone [repository-url]
+git clone https://github.com/wanmail/Know-Your-Network.git
 ```
 
 2. Create `.env` file with Neo4j credentials
